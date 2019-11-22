@@ -2,7 +2,16 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const addRequestId = require('express-request-id')();
+var morgan = require('morgan');
+
+const logger = require('./logger');
+
+morgan.token('id', function getId(req) {
+  return req.id;
+});
+
+var loggerFormat = ':id [:date[web]] ":method :url" :status :response-time';
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -13,7 +22,13 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-app.use(logger('dev'));
+app.use(addRequestId);
+app.use(
+  morgan(loggerFormat, {
+    stream: logger.stream,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
